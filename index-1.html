@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steve's ByTech — Components, Repair & Workshops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pcb:#0E2E22;
+    --pcb-2:#123B2C;
+    --panel:#153524;
+    --trace:rgba(237,237,227,0.14);
+    --silk:#EDEDE3;
+    --silk-dim:rgba(237,237,227,0.6);
+    --amber:#FF9F1C;
+    --amber-dim:#C77D14;
+    --copper-pad:#E0B14A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--pcb);color:var(--silk);font-family:'IBM Plex Sans',sans-serif;line-height:1.6;}
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-0.01em;margin:0;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--amber);color:var(--pcb);}
+  :focus-visible{outline:2px solid var(--amber);outline-offset:3px;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
+  @media(max-width:640px){.wrap{padding:0 20px;}}
+
+  /* ---------- NAV ---------- */
+  header{position:sticky;top:0;z-index:100;background:rgba(14,46,34,0.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--trace);}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0;}
+  .brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;}
+  .brand-mark{width:26px;height:26px;flex-shrink:0;}
+  .navlinks{display:flex;gap:34px;align-items:center;}
+  .navlinks a{font-size:13px;text-transform:uppercase;letter-spacing:0.08em;color:var(--silk-dim);position:relative;padding:4px 0;transition:color .2s ease;}
+  .navlinks a::after{content:'';position:absolute;left:0;bottom:0;width:0;height:1px;background:var(--amber);transition:width .25s ease;}
+  .navlinks a:hover{color:var(--silk);}
+  .navlinks a:hover::after{width:100%;}
+  .navcart{border:1px solid var(--amber);color:var(--amber)!important;padding:8px 18px!important;font-family:'JetBrains Mono',monospace;font-size:12px!important;}
+  .navcart::after{display:none;}
+  .navcart:hover{background:var(--amber);color:var(--pcb)!important;}
+  @media(max-width:840px){.navlinks a:not(.navcart){display:none;}}
+
+  /* ---------- HERO / CIRCUIT ---------- */
+  .hero{position:relative;padding:100px 0 80px;overflow:hidden;}
+  .hero-bg{position:absolute;inset:0;
+    background-image: linear-gradient(var(--trace) 1px, transparent 1px), linear-gradient(90deg, var(--trace) 1px, transparent 1px);
+    background-size:28px 28px;
+    -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent);
+            mask-image:radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent);
+  }
+  .hero-inner{position:relative;z-index:2;text-align:center;max-width:760px;margin:0 auto;}
+  .hero .eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--amber);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:22px;display:inline-flex;gap:10px;align-items:center;}
+  .hero .eyebrow::before,.hero .eyebrow::after{content:'';width:24px;height:1px;background:var(--amber);}
+  .hero h1{font-size:clamp(36px,6vw,62px);line-height:1.06;}
+  .hero h1 .accent{color:var(--amber);}
+  .hero p.lead{margin:22px auto 0;max-width:48ch;color:var(--silk-dim);font-size:17px;}
+  .hero-actions{display:flex;gap:16px;justify-content:center;margin-top:36px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:10px;padding:15px 28px;font-size:13px;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;border:1px solid transparent;transition:all .25s ease;font-family:'Space Grotesk',sans-serif;font-weight:600;}
+  .btn-amber{background:var(--amber);color:var(--pcb);}
+  .btn-amber:hover{background:#ffb448;transform:translateY(-2px);}
+  .btn-ghost{border-color:var(--silk-dim);color:var(--silk);}
+  .btn-ghost:hover{border-color:var(--silk);background:rgba(237,237,227,0.06);}
+
+  /* ---------- CIRCUIT MAP (signature) ---------- */
+  .circuit-frame{position:relative;margin-top:60px;background:var(--panel);border:1px solid var(--trace);padding:10px;}
+  .circuit-frame svg{width:100%;height:auto;display:block;}
+  .trace-line{fill:none;stroke:var(--trace);stroke-width:2;}
+  .trace-active{stroke:var(--amber);opacity:0;stroke-dasharray:6 6;animation:signal 1s linear infinite;transition:opacity .3s ease;}
+  .trace-active.on{opacity:0.9;}
+  @keyframes signal{to{stroke-dashoffset:-24;}}
+  .node{fill:var(--pcb-2);stroke:var(--trace);stroke-width:1.5;cursor:pointer;transition:fill .25s ease, stroke .25s ease;}
+  .node:hover, .node.active{fill:rgba(255,159,28,0.18);stroke:var(--amber);}
+  .node-label{font-family:'JetBrains Mono',monospace;font-size:11px;fill:var(--silk-dim);pointer-events:none;text-transform:uppercase;letter-spacing:0.04em;}
+  .node-pad{fill:var(--copper-pad);opacity:0.9;}
+
+  .circuit-panel{margin-top:20px;padding:22px;border:1px solid var(--trace);background:var(--panel);}
+  .circuit-panel .cp-title{font-size:19px;margin-bottom:8px;color:var(--amber);}
+  .circuit-panel .cp-body{font-size:14px;color:var(--silk-dim);}
+  .circuit-panel .cp-stock{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--silk);margin-top:10px;display:block;}
+
+  /* ---------- SECTION SHELL ---------- */
+  section{padding:110px 0;}
+  .section-head{max-width:620px;margin-bottom:52px;}
+  .section-head .eyebrow2{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--amber);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;display:block;}
+  .section-head h2{font-size:clamp(28px,3.8vw,42px);}
+  .section-head p{margin-top:16px;color:var(--silk-dim);}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease, transform .7s ease;}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  /* ---------- PRODUCTS ---------- */
+  .products-section{background:var(--pcb-2);border-top:1px solid var(--trace);border-bottom:1px solid var(--trace);}
+  .product-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--trace);}
+  @media(max-width:900px){.product-grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:480px){.product-grid{grid-template-columns:1fr;}}
+  .product-card{background:var(--pcb-2);padding:26px 22px;transition:background .25s ease;position:relative;}
+  .product-card:hover{background:var(--pcb);}
+  .product-card .sku{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--amber-dim);letter-spacing:0.04em;}
+  .product-card h4{font-size:16px;margin:10px 0 6px;}
+  .product-card .stock{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--silk-dim);margin-bottom:14px;}
+  .product-card .price{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--amber);}
+  .product-icon{width:32px;height:32px;color:var(--silk-dim);margin-bottom:14px;}
+
+  /* ---------- REPAIR TABS ---------- */
+  .tabs{display:flex;border-bottom:1px solid var(--trace);margin-bottom:44px;flex-wrap:wrap;}
+  .tab-btn{background:none;border:none;color:var(--silk-dim);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;text-transform:uppercase;letter-spacing:0.06em;padding:16px 24px;cursor:pointer;position:relative;transition:color .25s ease;}
+  .tab-btn::after{content:'';position:absolute;left:0;bottom:-1px;width:100%;height:2px;background:var(--amber);opacity:0;transition:opacity .25s ease;}
+  .tab-btn.active{color:var(--silk);}
+  .tab-btn.active::after{opacity:1;}
+  .tab-panel{display:none;grid-template-columns:1fr 1fr;gap:56px;}
+  .tab-panel.active{display:grid;}
+  @media(max-width:800px){.tab-panel.active{grid-template-columns:1fr;}}
+  .tab-copy h3{font-size:28px;margin-bottom:14px;}
+  .tab-copy p{color:var(--silk-dim);font-size:15px;margin-bottom:22px;}
+  .spec-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0;}
+  .spec-list li{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--trace);font-size:14px;}
+  .spec-list li .k{color:var(--silk-dim);}
+  .spec-list li .v{font-family:'JetBrains Mono',monospace;color:var(--amber);}
+  .tab-visual{border:1px solid var(--trace);background:var(--panel);padding:24px;display:flex;flex-direction:column;justify-content:center;gap:14px;}
+  .tab-visual .tv-line{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--silk-dim);display:flex;justify-content:space-between;}
+  .tab-visual .tv-line .status{color:var(--amber);}
+
+  /* ---------- WORKSHOPS ---------- */
+  .workshop-list{display:flex;flex-direction:column;}
+  .workshop-item{display:flex;justify-content:space-between;align-items:center;padding:22px 0;border-bottom:1px solid var(--trace);flex-wrap:wrap;gap:12px;}
+  .workshop-item .w-date{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--amber);min-width:110px;}
+  .workshop-item .w-name{font-size:16px;font-weight:500;flex:1;min-width:200px;}
+  .workshop-item .w-meta{font-size:13px;color:var(--silk-dim);font-family:'JetBrains Mono',monospace;}
+  .workshop-item .w-seats{border:1px solid var(--amber);color:var(--amber);font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 12px;}
+
+  /* ---------- CTA / FOOTER ---------- */
+  .cta-section{text-align:center;padding:140px 0;background:var(--pcb-2);border-top:1px solid var(--trace);}
+  .cta-section h2{font-size:clamp(30px,4.5vw,52px);max-width:16ch;margin:0 auto 26px;}
+  .cta-section h2 .accent{color:var(--amber);}
+
+  footer{border-top:1px solid var(--trace);padding:60px 0 34px;}
+  .footer-top{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px;margin-bottom:50px;}
+  @media(max-width:800px){.footer-top{grid-template-columns:1fr 1fr;}}
+  .footer-brand p{color:var(--silk-dim);font-size:14px;max-width:32ch;margin-top:12px;}
+  .footer-col h4{font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:var(--amber);margin-bottom:16px;}
+  .footer-col a, .footer-col p{display:block;font-size:14px;color:var(--silk-dim);margin-bottom:10px;}
+  .footer-col a:hover{color:var(--silk);}
+  .newsletter{display:flex;border-bottom:1px solid var(--silk-dim);max-width:300px;margin-top:12px;}
+  .newsletter input{background:none;border:none;color:var(--silk);padding:9px 0;font-size:14px;flex:1;font-family:'IBM Plex Sans',sans-serif;}
+  .newsletter input::placeholder{color:var(--silk-dim);}
+  .newsletter button{background:none;border:none;color:var(--amber);cursor:pointer;font-size:13px;text-transform:uppercase;letter-spacing:0.06em;}
+  .footer-bottom{border-top:1px solid var(--trace);padding-top:24px;font-size:12px;color:var(--silk-dim);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <nav>
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 26 26"><rect x="4" y="4" width="18" height="18" rx="1" fill="none" stroke="#FF9F1C" stroke-width="2"/><circle cx="9" cy="9" r="1.6" fill="#FF9F1C"/><circle cx="17" cy="9" r="1.6" fill="#FF9F1C"/><circle cx="9" cy="17" r="1.6" fill="#FF9F1C"/><circle cx="17" cy="17" r="1.6" fill="#FF9F1C"/></svg>
+        Steve's ByTech
+      </div>
+      <div class="navlinks">
+        <a href="#shop">Shop</a>
+        <a href="#repair">Repair</a>
+        <a href="#workshops">Workshops</a>
+        <a href="#mpesa" class="navcart">Cart (0)</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="wrap hero-inner">
+    <span class="eyebrow">Parts · Repair · Workshops</span>
+    <h1>Built <span class="accent">one component</span> at a time.</h1>
+    <p class="lead">Components bin by bin, tools that actually get used, and a repair bench in the back that fixes more than it replaces. Click a node below to see what's in stock.</p>
+    <div class="hero-actions">
+      <a href="#shop" class="btn btn-amber">Shop Components</a>
+      <a href="#repair" class="btn btn-ghost">Book a Repair</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="circuit-frame">
+      <svg viewBox="0 0 1000 300" id="circuitSvg" aria-label="Interactive circuit trace diagram">
+        <!-- static faint grid traces -->
+        <path class="trace-line" d="M120 150 H400"/>
+        <path class="trace-line" d="M400 150 V60 H620"/>
+        <path class="trace-line" d="M400 150 V240 H620"/>
+        <path class="trace-line" d="M620 60 H880"/>
+        <path class="trace-line" d="M620 240 H880"/>
+        <path class="trace-line" d="M400 150 H620"/>
+        <!-- animated overlay traces, toggled by JS -->
+        <path class="trace-active" data-line="hub-mcu" d="M120 150 H400"/>
+        <path class="trace-active" data-line="mcu-passive" d="M400 150 V60 H620"/>
+        <path class="trace-active" data-line="mcu-power" d="M400 150 V240 H620"/>
+        <path class="trace-active" data-line="mcu-sensors" d="M400 150 H620"/>
+        <path class="trace-active" data-line="passive-tools" d="M620 60 H880"/>
+        <path class="trace-active" data-line="power-tools" d="M620 240 H880"/>
+
+        <!-- central hub node -->
+        <circle class="node node-pad" cx="120" cy="150" r="7"/>
+        <circle class="node" data-node="hub" cx="120" cy="150" r="20"/>
+        <text class="node-label" x="120" y="184" text-anchor="middle">BENCH</text>
+
+        <circle class="node node-pad" cx="400" cy="150" r="6"/>
+        <circle class="node" data-node="mcu" cx="400" cy="150" r="18"/>
+        <text class="node-label" x="400" y="182" text-anchor="middle">MCUS</text>
+
+        <circle class="node node-pad" cx="620" cy="60" r="6"/>
+        <circle class="node" data-node="passives" cx="620" cy="60" r="16"/>
+        <text class="node-label" x="620" y="30" text-anchor="middle">PASSIVES</text>
+
+        <circle class="node node-pad" cx="620" cy="240" r="6"/>
+        <circle class="node" data-node="power" cx="620" cy="240" r="16"/>
+        <text class="node-label" x="620" y="272" text-anchor="middle">POWER</text>
+
+        <circle class="node node-pad" cx="880" cy="60" r="6"/>
+        <circle class="node" data-node="sensors" cx="880" cy="60" r="16"/>
+        <text class="node-label" x="880" y="30" text-anchor="middle">SENSORS</text>
+
+        <circle class="node node-pad" cx="880" cy="240" r="6"/>
+        <circle class="node" data-node="tools" cx="880" cy="240" r="16"/>
+        <text class="node-label" x="880" y="272" text-anchor="middle">TOOLS</text>
+      </svg>
+    </div>
+    <div class="circuit-panel reveal" id="circuitPanel">
+      <div class="cp-title">Select a node</div>
+      <div class="cp-body">Click any labeled node on the board to see what's in stock in that category.</div>
+    </div>
+  </div>
+</section>
+
+<section class="products-section" id="shop">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow2">This Week's Bench</span>
+      <h2>What's actually restocked.</h2>
+      <p>No permanent bestseller list — this is what came in this week and what's still got stock on the shelf.</p>
+    </div>
+  </div>
+  <div class="product-grid reveal" id="productGrid"></div>
+</section>
+
+<section id="repair">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow2">Repair Bench</span>
+      <h2>Four kinds of broken, one bench.</h2>
+      <p>Every device gets a free diagnostic before any quote. If it's not worth fixing, we'll tell you that too.</p>
+    </div>
+    <div class="tabs" id="repairTabs"></div>
+    <div id="repairPanels"></div>
+  </div>
+</section>
+
+<section id="workshops">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow2">Learn on the Bench</span>
+      <h2>Workshops, taught by whoever fixed it last.</h2>
+      <p>Small groups, real solder, real boards. Bring your own project if you've got one.</p>
+    </div>
+    <div class="workshop-list reveal" id="workshopList"></div>
+  </div>
+</section>
+
+<section class="cta-section reveal">
+  <div class="wrap">
+    <h2>If it doesn't power on, <span class="accent">bring it in.</span></h2>
+    <a href="#repair" class="btn btn-amber">Book a Diagnostic</a>
+  </div>
+</section>
+
+<section id="mpesa" style="padding:90px 0;border-top:1px solid var(--trace);">
+  <div class="wrap" style="max-width:720px;">
+    <div class="hero .eyebrow" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--amber);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:18px;display:inline-flex;gap:10px;align-items:center;">
+      <span style="width:24px;height:1px;background:var(--amber);display:inline-block;"></span>
+      Checkout
+      <span style="width:24px;height:1px;background:var(--amber);display:inline-block;"></span>
+    </div>
+    <h1 style="font-size:clamp(28px,5vw,40px);line-height:1.1;margin-bottom:14px;">Pay with M-Pesa</h1>
+    <p style="color:var(--silk-dim);font-size:16px;max-width:52ch;margin-bottom:40px;">Complete your order by sending payment directly via M-Pesa, then confirm with your order details so we can prepare your items.</p>
+
+    <div style="background:var(--panel);border:1px solid var(--trace);border-radius:6px;padding:32px;position:relative;overflow:hidden;margin-bottom:24px;">
+      <div style="position:absolute;top:0;left:0;width:100%;height:3px;background:var(--amber);"></div>
+      <h2 style="font-size:13px;text-transform:uppercase;letter-spacing:0.1em;color:var(--silk-dim);margin-bottom:20px;font-family:'JetBrains Mono',monospace;font-weight:500;">Send Money — M-Pesa</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--trace);gap:16px;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--silk-dim);text-transform:uppercase;letter-spacing:0.06em;font-family:'JetBrains Mono',monospace;">Recipient Number</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--copper-pad);">0759 734 930</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;gap:16px;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--silk-dim);text-transform:uppercase;letter-spacing:0.06em;font-family:'JetBrains Mono',monospace;">Recipient Name</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:var(--copper-pad);">Steve Muriithi</span>
+      </div>
+    </div>
+
+    <div style="background:var(--panel);border:1px solid var(--trace);border-radius:6px;padding:32px;position:relative;overflow:hidden;margin-bottom:24px;">
+      <div style="position:absolute;top:0;left:0;width:100%;height:3px;background:var(--amber);"></div>
+      <h2 style="font-size:13px;text-transform:uppercase;letter-spacing:0.1em;color:var(--silk-dim);margin-bottom:20px;font-family:'JetBrains Mono',monospace;font-weight:500;">How to Pay</h2>
+      <div style="display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--trace);">
+        <span style="font-family:'JetBrains Mono',monospace;color:var(--amber);font-weight:600;font-size:14px;flex-shrink:0;width:22px;">01</span>
+        <span style="font-size:15px;">Go to <b style="color:var(--amber);">M-Pesa</b> on your phone menu and select <b style="color:var(--amber);">Send Money</b>.</span>
+      </div>
+      <div style="display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--trace);">
+        <span style="font-family:'JetBrains Mono',monospace;color:var(--amber);font-weight:600;font-size:14px;flex-shrink:0;width:22px;">02</span>
+        <span style="font-size:15px;">Enter the number <b style="color:var(--amber);">0759 734 930</b> and the order total as the amount.</span>
+      </div>
+      <div style="display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--trace);">
+        <span style="font-family:'JetBrains Mono',monospace;color:var(--amber);font-weight:600;font-size:14px;flex-shrink:0;width:22px;">03</span>
+        <span style="font-size:15px;">Enter your M-Pesa PIN and confirm the transaction.</span>
+      </div>
+      <div style="display:flex;gap:16px;padding:14px 0;">
+        <span style="font-family:'JetBrains Mono',monospace;color:var(--amber);font-weight:600;font-size:14px;flex-shrink:0;width:22px;">04</span>
+        <span style="font-size:15px;">Save your M-Pesa confirmation message (the code starting with a letter).</span>
+      </div>
+    </div>
+
+    <a href="tel:+254759734930" style="display:inline-flex;align-items:center;gap:10px;background:var(--amber);color:var(--pcb);font-weight:600;padding:14px 28px;border-radius:3px;font-size:14px;margin-top:8px;">📞 Call to Confirm Order</a>
+
+    <div style="font-size:13px;color:var(--silk-dim);margin-top:28px;padding:16px;border:1px dashed var(--trace);border-radius:4px;">Once payment is sent, WhatsApp or call 0759 734 930 with your M-Pesa confirmation code and order details so we can process and prepare your items for pickup or delivery.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="brand">
+          <svg class="brand-mark" viewBox="0 0 26 26"><rect x="4" y="4" width="18" height="18" rx="1" fill="none" stroke="#FF9F1C" stroke-width="2"/><circle cx="9" cy="9" r="1.6" fill="#FF9F1C"/><circle cx="17" cy="9" r="1.6" fill="#FF9F1C"/><circle cx="9" cy="17" r="1.6" fill="#FF9F1C"/><circle cx="17" cy="17" r="1.6" fill="#FF9F1C"/></svg>
+          Steve's ByTech
+        </div>
+        <p>Components, repair, and a workbench full of people who'd rather fix it than replace it.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Shop</h4>
+        <a href="#">Microcontrollers</a>
+        <a href="#">Passives</a>
+        <a href="#">Power &amp; Batteries</a>
+        <a href="#">Sensors</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <p>Moi Avenue, Nairobi</p>
+        <a href="mailto:muriithistephen796@gmail.com">muriithistephen796@gmail.com</a>
+        <a href="tel:+254759734930">0759 734 930</a>
+        <a href="#">Book a Repair</a>
+        <a href="#">Data Recovery</a>
+        <a href="#">Custom Builds</a>
+      </div>
+      <div class="footer-col">
+        <h4>Restock Alerts</h4>
+        <p style="font-size:13px;">Know when the good stuff comes in.</p>
+        <div class="newsletter">
+          <input type="email" placeholder="you@email.com" aria-label="Email for restock alerts">
+          <button>Join →</button>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Steve's ByTech, Moi Avenue.</span>
+      <span class="mono">MCU · PASSIVE · POWER · SENSOR · TOOL</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+},{threshold:0.15});
+revealEls.forEach(el=>io.observe(el));
+
+// ---------- Circuit map ----------
+const nodeInfo = {
+  hub: {title:'The Bench', body:'Where every repair starts and most builds get tested before they go home.', stock:'N/A — this is the diagnostic station'},
+  mcu: {title:'Microcontrollers', body:'Dev boards and bare chips for anything from a blinking LED to a full robotics build.', stock:'42 SKUs in stock · restocked Tuesday'},
+  passives: {title:'Passives', body:'Resistors, capacitors, inductors — sold by the strip or by the hundred, no minimum order.', stock:'2,300+ units across 180 values'},
+  power: {title:'Power & Batteries', body:'LiPo cells, buck converters, and bench supplies. Everything is tested on the bench before it goes on the shelf.', stock:'31 SKUs in stock'},
+  sensors: {title:'Sensors', body:'Temperature, motion, distance, and gas sensors — breakout boards pre-soldered where it matters.', stock:'26 SKUs in stock'},
+  tools: {title:'Tools', body:'Soldering irons, hot air stations, multimeters, and the odd specialty tool nobody else stocks locally.', stock:'19 SKUs in stock'}
+};
+
+const links = {
+  hub:['hub-mcu'],
+  mcu:['hub-mcu','mcu-passive','mcu-power','mcu-sensors'],
+  passives:['mcu-passive','passive-tools'],
+  power:['mcu-power','power-tools'],
+  sensors:['mcu-sensors'],
+  tools:['passive-tools','power-tools']
+};
+
+const circuitPanel = document.getElementById('circuitPanel');
+document.querySelectorAll('[data-node]').forEach(n=>{
+  n.setAttribute('tabindex','0');
+  n.setAttribute('role','button');
+  const key = n.dataset.node;
+  n.setAttribute('aria-label', nodeInfo[key].title);
+  const activate = ()=>{
+    document.querySelectorAll('[data-node]').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('.trace-active').forEach(el=>el.classList.remove('on'));
+    n.classList.add('active');
+    (links[key]||[]).forEach(lineKey=>{
+      document.querySelectorAll(`.trace-active[data-line="${lineKey}"]`).forEach(l=>l.classList.add('on'));
+    });
+    const info = nodeInfo[key];
+    circuitPanel.innerHTML = `<div class="cp-title">${info.title}</div><div class="cp-body">${info.body}</div><span class="cp-stock mono">${info.stock}</span>`;
+  };
+  n.addEventListener('click', activate);
+  n.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); activate(); }});
+});
+
+// ---------- Products ----------
+const products = [
+  {sku:'MCU-2201', name:'ESP32-S3 Dev Board', stock:'IN STOCK · 34 units', price:'Ksh 1,500'},
+  {sku:'PWR-0087', name:'18650 LiPo Cell, 3.7V', stock:'IN STOCK · 210 units', price:'Ksh 550'},
+  {sku:'SEN-1130', name:'BME280 Temp/Humidity', stock:'IN STOCK · 18 units', price:'Ksh 900'},
+  {sku:'TL-0042', name:'Adjustable Hot Air Station', stock:'LOW STOCK · 3 units', price:'Ksh 11,500'},
+  {sku:'PAS-3300', name:'1/4W Resistor Kit, 600pc', stock:'IN STOCK · 90 units', price:'Ksh 1,150'},
+  {sku:'MCU-2214', name:'RP2040 Pico Board', stock:'IN STOCK · 47 units', price:'Ksh 680'},
+  {sku:'SEN-1145', name:'VL53L0X Distance Sensor', stock:'IN STOCK · 22 units', price:'Ksh 950'},
+  {sku:'TL-0019', name:'Digital Bench Multimeter', stock:'IN STOCK · 11 units', price:'Ksh 4,400'}
+];
+
+const icons = [
+  'M4 4 h16 v16 h-16 Z M8 4 v-3 M16 4 v-3 M8 20 v3 M16 20 v3 M4 8 h-3 M4 16 h-3 M20 8 h3 M20 16 h3',
+  'M8 3 h8 v4 h2 v14 h-12 v-14 h2 Z M9 10 h6 M9 14 h6',
+  'M12 3 C7 8 5 12 5 15 a7 7 0 0 0 14 0 c0 -3 -2 -7 -7 -12 Z',
+  'M4 10 L20 10 M6 10 V6 h4 v4 M18 10 V6 h-4 v4 M6 14 v4 h4 v-4 M18 14 v4 h-4 v-4',
+  'M4 6 h4 v4 h-4 Z M10 6 h4 v4 h-4 Z M16 6 h4 v4 h-4 Z M4 14 h4 v4 h-4 Z M10 14 h4 v4 h-4 Z M16 14 h4 v4 h-4 Z',
+  'M12 2 L4 7 v6 c0 5 4 8 8 9 c4 -1 8 -4 8 -9 v-6 Z M9 12 l2 2 4 -4',
+  'M6 20 L10 4 h4 l-2 8 h4 l-6 8 Z',
+  'M4 4 h16 v12 h-16 Z M8 20 h8 M12 16 v4'
+];
+
+const productGrid = document.getElementById('productGrid');
+products.forEach((p,i)=>{
+  const card = document.createElement('div');
+  card.className = 'product-card';
+  card.innerHTML = `
+    <svg class="product-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="${icons[i]}"/></svg>
+    <div class="sku mono">${p.sku}</div>
+    <h4>${p.name}</h4>
+    <div class="stock mono">${p.stock}</div>
+    <div class="price">${p.price}</div>
+  `;
+  productGrid.appendChild(card);
+});
+
+// ---------- Repair tabs ----------
+const repairs = [
+  {
+    key:'solder', label:'Soldering Repair',
+    title:'Bad joints, dead ports, swollen batteries.',
+    desc:'Most "dead" devices are one bad solder joint or a swollen battery cell away from working again. We diagnose free, quote before we touch anything.',
+    specs:[['Typical turnaround','2–3 business days'],['Diagnostic fee','Free, no obligation'],['Warranty on repair','90 days, labor']]
+  },
+  {
+    key:'data', label:'Data Recovery',
+    title:'Drives that click, won\'t mount, or won\'t boot.',
+    desc:'Logical recovery on-site for corrupted filesystems and failed boot drives. Physical media failures get referred to our cleanroom partner with a direct quote, no markup.',
+    specs:[['Typical turnaround','1–5 business days'],['Success rate, logical failure','~85%'],['Physical failure','Referred, no markup']]
+  },
+  {
+    key:'custom', label:'Custom Builds',
+    title:'PCs, NAS boxes, and one-off electronics projects.',
+    desc:'Bring a parts list or bring a problem — we\'ll spec a build, source what we can from the shelf, and assemble on the bench with you watching if you want to learn.',
+    specs:[['Build time','3–7 business days'],['Sourcing','Shelf stock + special order'],['Assembly labor','Ksh 5,850/hr, quoted upfront']]
+  },
+  {
+    key:'diag', label:'Diagnostics',
+    title:'Not sure what\'s wrong? Start here.',
+    desc:'Full diagnostic pass on any device — power, storage, connectivity, thermal. You get a written report either way, whether or not you repair with us.',
+    specs:[['Turnaround','Same day, most devices'],['Cost','Free with any repair'],['Report','Written, itemized']]
+  }
+];
+
+const repairTabs = document.getElementById('repairTabs');
+const repairPanels = document.getElementById('repairPanels');
+repairs.forEach((r,i)=>{
+  const btn = document.createElement('button');
+  btn.className = 'tab-btn' + (i===0 ? ' active' : '');
+  btn.textContent = r.label;
+  btn.addEventListener('click', ()=> selectRepairTab(r.key));
+  repairTabs.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'tab-panel' + (i===0 ? ' active' : '');
+  panel.dataset.key = r.key;
+  panel.innerHTML = `
+    <div class="tab-copy">
+      <h3>${r.title}</h3>
+      <p>${r.desc}</p>
+    </div>
+    <div class="tab-visual">
+      ${r.specs.map(s=>`<div class="tv-line"><span>${s[0]}</span><span class="status mono">${s[1]}</span></div>`).join('')}
+    </div>
+  `;
+  repairPanels.appendChild(panel);
+});
+
+function selectRepairTab(key){
+  document.querySelectorAll('#repairTabs .tab-btn').forEach((b,i)=> b.classList.toggle('active', repairs[i].key===key));
+  document.querySelectorAll('#repairPanels .tab-panel').forEach(p=> p.classList.toggle('active', p.dataset.key===key));
+}
+
+// ---------- Workshops ----------
+const workshops = [
+  {date:'JUL 12', name:'Soldering 101: From Cold Joints to Confident', meta:'2 hrs · Bench fee Ksh 1,950', seats:'4 seats left'},
+  {date:'JUL 19', name:'Arduino Basics: Blink to Sensor Loop', meta:'3 hrs · Bench fee Ksh 3,250', seats:'7 seats left'},
+  {date:'AUG 02', name:'Battery Safety & LiPo Handling', meta:'1.5 hrs · Free', seats:'12 seats left'},
+  {date:'AUG 16', name:'Repair Your Own Game Controller', meta:'2 hrs · Bench fee Ksh 2,600', seats:'2 seats left'}
+];
+
+const workshopList = document.getElementById('workshopList');
+workshops.forEach(w=>{
+  const item = document.createElement('div');
+  item.className = 'workshop-item';
+  item.innerHTML = `
+    <span class="w-date mono">${w.date}</span>
+    <span class="w-name">${w.name}</span>
+    <span class="w-meta">${w.meta}</span>
+    <span class="w-seats">${w.seats}</span>
+  `;
+  workshopList.appendChild(item);
+});
+</script>
+</body>
+</html>
